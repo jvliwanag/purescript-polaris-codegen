@@ -99,7 +99,7 @@ getModuleFilePaths allFilePaths = foldMap f allFilePaths
 
 listLocales :: F (Array FilePath)
 listLocales =
-  map (\p -> basenameWithoutExt p ".json") <$> readdir "./node_modules/@shopify/polaris/locales"
+  map (\p -> basenameWithoutExt p ".json") <$> readdir "polaris-react/locales"
 
 readModuleFilePaths :: ModuleFilePaths -> F Module
 readModuleFilePaths { propsFilePath, extrasFilePath } = do
