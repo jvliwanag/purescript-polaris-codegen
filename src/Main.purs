@@ -12,21 +12,25 @@ import Data.Array.ST as STArray
 import Data.Either (Either(..))
 import Data.Foldable (fold, intercalate)
 import Data.List (foldMap)
-import Data.Maybe (Maybe(..), isJust)
+import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.String (Pattern(..), Replacement(..), stripSuffix)
 import Data.String as String
 import Data.Traversable (traverse, traverse_)
 import Effect (Effect)
-import Effect.Aff (Aff, runAff_)
+import Effect.Aff (Aff, makeAff, nonCanceler, runAff_)
+import Effect.Class (liftEffect)
 import Effect.Class.Console (log, warn)
 import Effect.Exception (error)
 import Effect.Exception as Exception
 import Foreign (Foreign, renderForeignError, unsafeToForeign)
 import Foreign.Object (Object)
 import Foreign.Object as Object
+import Node.ChildProcess (defaultExecOptions, execFile)
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff (readTextFile, readdir)
+import Node.FS.Sync as FS
 import Node.Path (FilePath, basenameWithoutExt)
+import Node.Path as Path
 import Polaris.Codegen.LocalesModulePrinter (localesModuleBuilder)
 import Polaris.Codegen.ModulePlanner (planModule)
 import Polaris.Codegen.ModulePrinter (componentModuleBuilder)
@@ -35,6 +39,7 @@ import Simple.JSON (class ReadForeign, read, readJSON, read_)
 
 main :: Effect Unit
 main = runAff_ logResult do
+  initProjectDir
   modules <- listDataFiles >>= traverse readModuleFilePaths
   locales <- listLocales
   runProject projectSettings do
@@ -161,8 +166,28 @@ readContent path =
     Right a ->
       pure a
 
+initProjectDir :: Aff Unit
+initProjectDir =
+  unlessM (liftEffect $ FS.exists generatedProjectDir) $
+  makeAff \cb -> do
+    log $ "Creating " <> generatedProjectDir <> "..."
+    FS.mkdir generatedProjectDir
+    log $ "Cloning " <> generatedGitRepo <> " to " <> generatedProjectDir <> "..."
+    _ <- execFile "git"
+         [ "clone", generatedGitRepo, generatedProjectDir ]
+         defaultExecOptions \res ->
+         cb $ maybe (pure unit) Left res.error
+    pure nonCanceler
+
+generatedGitRepo :: FilePath
+generatedGitRepo = "git@github.com:jvliwanag/purescript-polaris.git"
+
+generatedProjectDir :: FilePath
+generatedProjectDir = "purescript-polaris"
+
 generatedSrcDir :: FilePath
-generatedSrcDir = "purescript-polaris/src/generated"
+generatedSrcDir =
+  Path.concat [ generatedProjectDir, "src", "generated" ]
 
 errMessage :: forall a. String -> F a
 errMessage = throwError <<< error

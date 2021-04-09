@@ -9,4 +9,4 @@
 /.psa*
 /.spago
 
-/purescript-polaris/src/generated
+/purescript-polaris/
