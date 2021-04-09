@@ -8,11 +8,11 @@ import Data.Array as Array
 
 cnst_Coercible :: Type -> Type -> Constraint
 cnst_Coercible =
-  cnst2 "Untagged.Coercible(class Coercible)"
+  cnst2 "Untagged.Castable(class Castable)"
 
 expr_coerce :: Expr
 expr_coerce =
-  exprIdent "Untagged.Coercible(coerce)"
+  exprIdent "Untagged.Castable(cast)"
 
 expr_elem :: Expr -> Expr
 expr_elem =
