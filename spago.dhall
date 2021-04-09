@@ -5,7 +5,6 @@
   , "cst-simple"
   , "effect"
   , "foreign-object"
-  , "generics-rep"
   , "node-fs-aff"
   , "parsing"
   , "ps-cst"

@@ -1,5 +1,5 @@
 let upstream =
-      https://github.com/purescript/package-sets/releases/download/psc-0.13.8-20201021/packages.dhall sha256:55ebdbda1bd6ede4d5307fbc1ef19988c80271b4225d833c8d6fb9b6fb1aa6d8
+      https://github.com/purescript/package-sets/releases/download/psc-0.14.0-20210406/packages.dhall sha256:7b6af643c2f61d936878f58b613fade6f3cb39f2b4a310f6095784c7b5285879
 
 let additions =
       { dodo-printer =
@@ -20,24 +20,23 @@ let additions =
           , "strings"
           ]
         , repo = "https://github.com/natefaubion/purescript-dodo-printer.git"
-        , version = "v1.0.8"
+        , version = "v2.0.0"
         }
       , ps-cst =
         { dependencies =
-          [ "ansi"
-          , "console"
-          , "dodo-printer"
+          [ "console"
           , "effect"
-          , "generics-rep"
-          , "node-fs-aff"
-          , "node-path"
           , "psci-support"
           , "record"
-          , "spec"
           , "strings"
+          , "spec"
+          , "node-path"
+          , "node-fs-aff"
+          , "ansi"
+          , "dodo-printer"
           ]
         , repo = "https://github.com/purescript-codegen/purescript-ps-cst.git"
-        , version = "5b0a078"
+        , version = "1339dd3"
         }
       , cst-simple =
         { dependencies =
@@ -55,7 +54,7 @@ let additions =
           ]
         , repo =
             "https://github.com/purescript-codegen/purescript-cst-simple.git"
-        , version = "fdea1e8"
+        , version = "3bdfe24"
         }
       , string-extra =
         { dependencies =
@@ -72,8 +71,8 @@ let additions =
           ]
         , repo =
             "https://github.com/purescript-contrib/purescript-strings-extra.git"
-        , version = "v2.1.0"
+        , version = "v3.0.0"
         }
       }
 
-in  upstream ⫽ additions
+in  upstream // additions

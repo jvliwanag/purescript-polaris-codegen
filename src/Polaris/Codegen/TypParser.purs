@@ -9,9 +9,10 @@ import Control.Lazy (fix)
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NonEmptyArray
-import Data.Char.Unicode (isAlpha, isAlphaNum, isLower)
+import Data.CodePoint.Unicode (isAlpha, isAlphaNum, isLower)
 import Data.List as List
 import Data.Maybe (Maybe(..))
+import Data.String (codePointFromChar)
 import Data.String.CodeUnits as CodeUnits
 import Polaris.Codegen.Defs (typ_Boolean, typ_Foreign, typ_Number, typ_String, typ_Unit)
 import Polaris.Codegen.Types (Prop, Typ(..), typBooleanLiteral, typJSX, typStringLiteral)
@@ -69,8 +70,8 @@ parseRefNames :: P String
 parseRefNames = List.intercalate " & " <$> sepBy1 parseRefName (string " & ")
   where
     parseRefName =
-      (CodeUnits.singleton <$> (satisfy isAlpha))
-      <> (CodeUnits.fromCharArray <$> Array.many (satisfy (\c -> (isAlphaNum c) || (c == '.')))) -- todo prevent end with '.'
+      (CodeUnits.singleton <$> (satisfy charIsAlpha))
+      <> (CodeUnits.fromCharArray <$> Array.many (satisfy (\c -> (charIsAlphaNum c) || (c == '.')))) -- todo prevent end with '.'
 
 parseFnParts :: P Typ -> P { params :: Array Typ, out :: Typ }
 parseFnParts parseTyp' = ado
@@ -128,9 +129,20 @@ capitalizedWord =
 
 uncapitalizedWord :: P String
 uncapitalizedWord =
-  (CodeUnits.singleton <$> (satisfy isLower <?> "lowercase letter"))
+  (CodeUnits.singleton <$> (satisfy charIsLower <?> "lowercase letter"))
   <> (CodeUnits.fromCharArray <$> Array.many alphaNum)
 
 word :: P String
 word = (CodeUnits.singleton <$> alphaNum)
   <> (CodeUnits.fromCharArray <$> Array.many alphaNum)
+
+-- Utils
+
+charIsAlpha :: Char -> Boolean
+charIsAlpha = isAlpha <<< codePointFromChar
+
+charIsAlphaNum :: Char -> Boolean
+charIsAlphaNum = isAlphaNum <<< codePointFromChar
+
+charIsLower :: Char -> Boolean
+charIsLower = isLower <<< codePointFromChar
