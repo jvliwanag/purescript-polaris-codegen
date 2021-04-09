@@ -5,7 +5,5 @@
   "repository": "git@github.com:zapph/purescript-polaris-codegen.git",
   "author": "Jan Vincent Liwanag <jvliwanag@gmail.com>",
   "license": "MIT",
-  "devDependencies": {
-    "@shopify/polaris": "^5.10.0"
-  }
+  "devDependencies": {}
 }
