@@ -1,0 +1,3 @@
+[submodule "polaris-react"]
+	path = polaris-react
+	url = https://github.com/Shopify/polaris-react.git
