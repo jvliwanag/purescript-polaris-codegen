@@ -6,18 +6,20 @@ import Prelude hiding (between)
 
 import Control.Alt ((<|>))
 import Control.Lazy (fix)
+import Data.Array (many)
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as NonEmptyArray
 import Data.CodePoint.Unicode (isAlpha, isAlphaNum, isLower)
-import Data.List as List
 import Data.Maybe (Maybe(..))
 import Data.String (codePointFromChar)
 import Data.String.CodeUnits as CodeUnits
+import Data.Tuple (Tuple(..), uncurry)
+import Data.Tuple.Nested (type (/\))
 import Polaris.Codegen.Defs (typ_Boolean, typ_Foreign, typ_Number, typ_String, typ_Unit)
 import Polaris.Codegen.Types (Prop, Typ(..), typBooleanLiteral, typJSX, typStringLiteral)
 import Text.Parsing.Parser (Parser, fail)
-import Text.Parsing.Parser.Combinators (asErrorMessage, between, option, sepBy, sepBy1, try, (<?>))
+import Text.Parsing.Parser.Combinators (asErrorMessage, between, option, optional, sepBy, sepBy1, try, (<?>))
 import Text.Parsing.Parser.String (noneOf, satisfy, string)
 import Text.Parsing.Parser.Token (alphaNum, upper)
 
@@ -40,12 +42,16 @@ parseTyp = fix \p -> do
       <|> (TypSType typ_Unit <$ string "void")
       <|> (typJSX <$ string "React.ReactNode")
       <|> (typJSX <$ string "React.ReactElement")
+-- TODO
+      <|> (typJSX <$ string "ReactElement<any, string | JSXElementConstructor<any>>")
       <|> (typJSX <$ string "ReactElement")
       <|> (typBooleanLiteral true <$ string "true")
       <|> (typBooleanLiteral false <$ string "false")
       <|> (typStringLiteral <$> parseStringLiteral)
+
+-- TODO
       <|> (TypRecord <$> parseRecordEntries p)
-      <|> (TypRef <$> parseRefNames)
+      <|> (uncurry TypRef <$> parseTypRef p)
       <|> (TypFn <$> parseFnParts p)
 
     parseOneTyp p =
@@ -54,8 +60,9 @@ parseTyp = fix \p -> do
 
     parseOneOrArrayTyp p = do
       g <- parseOneTyp p
-      f <- option identity (string "[]" $> TypArray)
-      pure $ f g
+      loop g
+      where
+        loop b = (string "[]" >>= \_ -> (loop (TypArray b))) <|> pure b
 
     parseTypUnions p =
       sepBy1 (parseOneOrArrayTyp p) (string " | ")
@@ -66,12 +73,29 @@ parseStringLiteral =
   where
     lit = (CodeUnits.fromCharArray <$> Array.many (noneOf ['"']))
 
+-- TODO handle intersections
+parseTypRef :: P Typ -> P (String /\ Array Typ)
+parseTypRef p = Tuple
+  <$> parseRefName
+  <*> parseArgs
+  where
+    parseRefName =
+      (CodeUnits.singleton <$> satisfy charIsAlpha)
+      <> (CodeUnits.fromCharArray <$> Array.many (satisfy (\c -> (charIsAlphaNum c) || (c == '.'))))
+
+    parseArgs =
+      option [] $
+      between (string "<") (string ">")
+      (Array.fromFoldable <$> sepBy1 p (string ", "))
+
+{-
 parseRefNames :: P String
 parseRefNames = List.intercalate " & " <$> sepBy1 parseRefName (string " & ")
   where
     parseRefName =
       (CodeUnits.singleton <$> (satisfy charIsAlpha))
       <> (CodeUnits.fromCharArray <$> Array.many (satisfy (\c -> (charIsAlphaNum c) || (c == '.')))) -- todo prevent end with '.'
+-}
 
 parseFnParts :: P Typ -> P { params :: Array Typ, out :: Typ }
 parseFnParts parseTyp' = ado
@@ -86,7 +110,12 @@ parseFnParamsPart parseTyp' =
 
 parseRecordEntries :: P Typ -> P (Array Prop)
 parseRecordEntries parseTyp' =
-  map toProp <$> parseParamsPart "{" "}" parseTyp'
+  map toProp <$>
+  ( between
+    (string "{ ")
+    (string "}")
+    (many (parseFnSingleParamPart (parseTyp' <* string "; ")))
+  )
 
   where
     toProp { name, typ } =
@@ -106,14 +135,15 @@ parseParamsPart open close parseTyp' =
   (between
    (string open)
    (string close)
-   (sepBy parseFnSingleParamPart (string ", "))
+   (sepBy (parseFnSingleParamPart parseTyp') (string ", "))
   )
-  where
-    parseFnSingleParamPart = ado
-      name <- uncapitalizedWord
-      _ <- string ": "
-      typ <- parseTyp'
-      in { name, typ }
+
+parseFnSingleParamPart :: P Typ -> P { name :: String , typ :: Typ }
+parseFnSingleParamPart parseTyp' = ado
+  name <- uncapitalizedWord <* optional (string "?")
+  _ <- string ": "
+  typ <- parseTyp'
+  in { name, typ }
 
 parseUnion :: P Typ -> P (NonEmptyArray Typ)
 parseUnion parseTyp' = opts >>= case _ of

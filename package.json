@@ -5,5 +5,8 @@
   "repository": "git@github.com:zapph/purescript-polaris-codegen.git",
   "author": "Jan Vincent Liwanag <jvliwanag@gmail.com>",
   "license": "MIT",
-  "devDependencies": {}
+  "devDependencies": {
+    "react-docgen-typescript": "^1.22.0",
+    "typescript": "^4.2.4"
+  }
 }

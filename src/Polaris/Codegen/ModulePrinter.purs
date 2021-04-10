@@ -156,7 +156,7 @@ toType (TypUnion as) = case tail' of
     hdType = toType head
 toType (TypRecord props) =
   typRecord_ (toRowLabel <$> props)
-toType (TypRef n) =
+toType (TypRef n _) = -- TODO
   if isCommonType nm
   then typCons $ "Polaris.Types(" <> nm <> ")"
   else typCons nm

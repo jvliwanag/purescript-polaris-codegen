@@ -82,7 +82,7 @@ data Typ
   = TypSType Type
   | TypUnion (NonEmptyArray Typ)
   | TypFn { params :: Array Typ, out :: Typ }
-  | TypRef String
+  | TypRef String (Array Typ)
   | TypArray Typ
   | TypRecord (Array Prop)
 

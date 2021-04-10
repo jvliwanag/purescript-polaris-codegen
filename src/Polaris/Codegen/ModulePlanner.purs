@@ -81,13 +81,14 @@ readRawProp (RawProp r) = do
     showParseError s e = "Given: " <> s <> ", Error: " <> show e
 
 fillInTypDef :: Maybe (Array RawProp) -> Typ -> F Typ
-fillInTypDef _ (TypRef name) | isCommonType name = do
-  pure $ TypRef name
-fillInTypDef (Just rp) (TypRef name) = do
+fillInTypDef _ (TypRef name tp) | isCommonType name = do
+  pure $ TypRef name tp
+fillInTypDef (Just rp) (TypRef name tp) = do
   props <- traverse readRawProp rp
-  TypRef <$> recordTypDef { name, typ: Just $ TypRecord props }
-fillInTypDef Nothing (TypRef name) =
-  TypRef <$> recordTypDef { name, typ: Nothing }
+  -- TODO look at type params
+  (\n -> TypRef n tp) <$> recordTypDef { name, typ: Just $ TypRecord props }
+fillInTypDef Nothing (TypRef name tp) =
+  (\n -> TypRef n tp) <$> recordTypDef { name, typ: Nothing }
 fillInTypDef rp (TypArray tr) = do -- todo limit this only to @(TypRef _)?
   -- for array types, the rawprops on the current node
   tr' <- fillInTypDef rp tr
@@ -102,10 +103,10 @@ fillInTypDef _ t =
   pure t
 
 fillInSubTypDef :: Maybe (Array RawProp) -> Typ -> F Typ
-fillInSubTypDef rp typ@(TypRef name) = do
+fillInSubTypDef rp typ@(TypRef name tp) = do
   typ' <- traverse readRawProp subRp <#> map _.typ
   if typ' /= Just typ
-    then TypRef <$> recordTypDef { name, typ: typ' }
+    then (\n -> TypRef n tp) <$> recordTypDef { name, typ: typ' }
     else pure typ
 
   where
