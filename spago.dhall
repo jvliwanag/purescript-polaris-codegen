@@ -1,6 +1,8 @@
 { name = "polaris-codegen"
 , dependencies =
-  [ "arrays"
+  [ "affjax"
+  , "arrays"
+  , "argonaut-codecs"
   , "console"
   , "cst-simple"
   , "effect"
@@ -9,7 +11,7 @@
   , "parsing"
   , "ps-cst"
   , "simple-json"
-  , "string-extra"
+  , "strings-extra"
   , "psci-support"
   , "st"
   ]

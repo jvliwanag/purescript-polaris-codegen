@@ -6,25 +6,24 @@ import CST.Simple.Project (defaultProjectSettings, runProject)
 import CST.Simple.ProjectBuilder (addModule)
 import Control.Monad.Error.Class (throwError)
 import Control.Monad.ST (ST)
+import Data.Argonaut.Decode (class DecodeJson, decodeJson, parseJson, printJsonDecodeError)
 import Data.Array as Array
 import Data.Array.ST (STArray)
 import Data.Array.ST as STArray
 import Data.Either (Either(..))
-import Data.Foldable (fold, intercalate)
+import Data.Foldable (fold)
 import Data.List (foldMap)
 import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.String (Pattern(..), Replacement(..), stripSuffix)
 import Data.String as String
 import Data.Traversable (traverse, traverse_)
+import Debug (traceM)
 import Effect (Effect)
 import Effect.Aff (Aff, makeAff, nonCanceler, runAff_)
 import Effect.Class (liftEffect)
 import Effect.Class.Console (log, warn)
 import Effect.Exception (error)
 import Effect.Exception as Exception
-import Foreign (Foreign, renderForeignError, unsafeToForeign)
-import Foreign.Object (Object)
-import Foreign.Object as Object
 import Node.ChildProcess (defaultExecOptions, execFile)
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff (readTextFile, readdir)
@@ -34,14 +33,15 @@ import Node.Path as Path
 import Polaris.Codegen.LocalesModulePrinter (localesModuleBuilder)
 import Polaris.Codegen.ModulePlanner (planModule)
 import Polaris.Codegen.ModulePrinter (componentModuleBuilder)
-import Polaris.Codegen.Types (Module, ModuleExtras, RawProp)
-import Simple.JSON (class ReadForeign, read, readJSON, read_)
+import Polaris.Codegen.SchemaFetcher (fetchSchema)
+import Polaris.Codegen.Types (Module, ModuleExtras, RawProp(..), RawComponent)
 
 main :: Effect Unit
 main = runAff_ logResult do
   initProjectDir
-  modules <- listDataFiles >>= traverse readModuleFilePaths
   locales <- listLocales
+  components <- Array.filter isValidComponent <$> fetchSchema
+  modules <- traverse assembleModule components
   runProject projectSettings do
     addModule "Polaris.Components.Locales" $ localesModuleBuilder locales
     traverse_ addComponentModule modules
@@ -54,8 +54,51 @@ main = runAff_ logResult do
                              , rmDirectoryFilesPreRun = true
                              }
 
-    addComponentModule m@{ name } =
+    addComponentModule m@{ name } = do
       addModule ("Polaris.Components." <> name) $ componentModuleBuilder m
+
+    isValidComponent rc =
+      rc.name /= "." && rc.name /= "components"
+
+assembleModule :: RawComponent -> Aff Module
+assembleModule rc = do
+  extras <- ifM (liftEffect $ FS.exists extrasFilePath)
+    (Just <$> readExtras)
+    (pure Nothing)
+
+  let extraProps = fold $ extras >>= _.rawProps
+      rawSubComponents = fold $ extras >>= _.rawSubComponents
+
+      rawProps = applyExtraProps extraProps
+
+  rightToF $ planModule {name: rc.name, rawProps, rawSubComponents}
+
+  where
+    extrasFilePath = "./data/" <> rc.name <> "-extras.json"
+
+    readExtras :: Aff ModuleExtras
+    readExtras = readContent extrasFilePath
+
+    applyExtraProps :: Array RawProp -> Array RawProp
+    applyExtraProps overrides =
+      STArray.run do
+        rsSt <- STArray.thaw rc.rawProps
+        traverse_ (applyOverride rsSt) overrides
+        pure rsSt
+
+    applyOverride
+      :: forall r
+         . STArray r RawProp
+         -> RawProp
+         -> ST r Unit
+    applyOverride rsSt orp@(RawProp o) = do
+      os <- STArray.unsafeFreeze rsSt
+      case (Array.findIndex (eq o.name <<< getName) os) of
+        Just ndx -> void $ STArray.modify ndx (const orp) rsSt
+        Nothing -> void $ STArray.push orp rsSt
+
+    getName :: RawProp -> String
+    getName (RawProp { name }) = name
 
 type F = Aff
 
@@ -101,68 +144,11 @@ listLocales :: F (Array FilePath)
 listLocales =
   map (\p -> basenameWithoutExt p ".json") <$> readdir "polaris-react/locales"
 
-readModuleFilePaths :: ModuleFilePaths -> F Module
-readModuleFilePaths { propsFilePath, extrasFilePath } = do
-  log $ "Reading " <> propsFilePath
-  os' <- readPropObjects propsFilePath
-
-  extra <- traverse readExtra extrasFilePath
-  let extraProps = fold $ extra >>= _.rawProps
-      rawSubComponents = fold $ extra >>= _.rawSubComponents
-
-      os = applyExtras extraProps os'
-
-  rawProps <- traverse readPropObject os
-
-  rightToF $ planModule {name, rawProps, rawSubComponents}
-
-  where
-    readPropObjects :: FilePath -> F (Array (Object Foreign))
-    readPropObjects = readContent
-
-    name = basenameWithoutExt propsFilePath ".json"
-
-    readExtra :: FilePath -> F ModuleExtras
-    readExtra e = do
-      log $ "Reading " <> e
-      readContent e
-
-    applyExtras :: Array (Object Foreign) -> Array (Object Foreign) -> Array (Object Foreign)
-    applyExtras overrides os =
-      STArray.run do
-        rsSt <- STArray.thaw os
-        traverse_ (applyExtraSt rsSt) overrides
-        pure rsSt
-
-    applyExtraSt
-      :: forall r
-         . STArray r (Object Foreign)
-         -> Object Foreign
-         -> ST r Unit
-    applyExtraSt rsSt o = do
-      os <- STArray.unsafeFreeze rsSt
-      case (Array.findIndex (eq oName <<< getName) os) of
-        Just ndx -> void $ STArray.modify ndx (Object.union o) rsSt
-        Nothing -> void $ STArray.push o rsSt
-
-      where
-        oName = getName o
-
-    getName :: Object Foreign -> Maybe String
-    getName = Object.lookup "name" >=> read_
-
-    readPropObject :: Object Foreign -> F RawProp
-    readPropObject o = case read (unsafeToForeign o) of
-      Left e ->
-        errMessage $ intercalate ", " $ map renderForeignError $ e
-      Right a ->
-        pure a
-
-readContent :: forall a. ReadForeign a => FilePath -> F a
+readContent :: forall a. DecodeJson a => FilePath -> F a
 readContent path =
-  readTextFile UTF8 path >>= \s -> case readJSON s of
+  readTextFile UTF8 path >>= \s -> case decodeJson =<< parseJson s of
     Left e ->
-      errMessage $ intercalate ", " $ map renderForeignError $ e
+      errMessage $ printJsonDecodeError e
     Right a ->
       pure a
 

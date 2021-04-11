@@ -2,25 +2,28 @@ module Polaris.Codegen.Types where
 
 import Prelude
 
-import CST.Simple (Type)
+import CST.Simple as C
+import Data.Argonaut.Decode (class DecodeJson, decodeJson)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe)
 import Data.Show.Generic (genericShow)
-import Foreign (Foreign)
-import Foreign.Object (Object)
 import Polaris.Codegen.Defs (typ_BooleanLit, typ_JSX, typ_StringLit)
 import Simple.JSON (class ReadForeign, readImpl)
 
 newtype RawProp =
   RawProp { name :: String
-           , "type" :: String
-           , mandatory :: Boolean
-           , "types" :: Maybe (Array RawProp)
-           }
+          , "type" :: String
+          , mandatory :: Boolean
+          , "types" :: Maybe (Array RawProp)
+          }
 
 instance rawPropReadForeign :: ReadForeign RawProp where
   readImpl f = RawProp <$> readImpl f
+instance rawPropDecodeJson :: DecodeJson RawProp where
+  decodeJson j = RawProp <$> decodeJson j
+instance rawPropShow :: Show RawProp where
+  show (RawProp r) = "(RawProp " <> show r <> ")"
 
 type RawComponent =
   { name :: String
@@ -34,7 +37,7 @@ type RawModule =
   }
 
 type ModuleExtras =
-  { rawProps :: Maybe (Array (Object Foreign))
+  { rawProps :: Maybe (Array RawProp)
   , rawSubComponents :: Maybe (Array RawComponent)
   }
 
@@ -76,7 +79,7 @@ type Prop =
   }
 
 data Typ
-  = TypSType Type
+  = TypSType C.Type
   | TypUnion (NonEmptyArray Typ)
   | TypFn { params :: Array Typ, out :: Typ }
   | TypRef String
