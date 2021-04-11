@@ -16,9 +16,7 @@ newtype RawProp =
   RawProp { name :: String
            , "type" :: String
            , mandatory :: Boolean
-           , description :: Maybe String
            , "types" :: Maybe (Array RawProp)
-             --  , defaultValue :: Foreign
            }
 
 instance rawPropReadForeign :: ReadForeign RawProp where
@@ -75,7 +73,6 @@ type Prop =
   { name :: String
   , typ :: Typ
   , required :: Boolean
-  , description :: Maybe String
   }
 
 data Typ

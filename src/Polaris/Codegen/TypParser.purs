@@ -93,7 +93,6 @@ parseRecordEntries parseTyp' =
       { name
       , typ
       , required: false
-      , description: Nothing
       }
 
 parseParamsPart

@@ -73,7 +73,6 @@ readRawProp (RawProp r) = do
     { name: r.name
     , typ
     , required: r.mandatory
-    , description: r.description
     }
 
   where
