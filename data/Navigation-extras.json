@@ -1,0 +1,161 @@
+{
+  "rawSubComponents": [
+    {
+      "name": "Section",
+      "rawProps": [
+        {
+          "name": "items",
+          "type": "Item[]",
+          "mandatory": false,
+          "description": "A collection of navigation items to be rendered inside the section",
+          "types": [
+            { "name": "url",
+              "type": "string",
+              "mandatory": false,
+              "description": "A location for the navigation item to navigate to when clicked"
+            },
+            { "name": "matches",
+              "type": "boolean",
+              "mandatory": false,
+              "description": "A boolean property indicating whether the navigation item should respond to a closely matching location property"
+            },
+            { "name": "exactMatch",
+              "type": "boolean",
+              "mandatory": false,
+              "description": "A boolean property indicating whether the navigation item should respond to an exactly matching location property"
+            },
+            { "name": "matchPaths",
+              "type": "string[]",
+              "mandatory": false,
+              "description": "A string property providing a collection of additional paths for the navigation item to respond to"
+            },
+            { "name": "excludePaths",
+              "type": "string[]",
+              "mandatory": false,
+              "description": "A string property providing an explicit collection of paths the navigation item should not respond to"
+            },
+            { "name": "icon",
+              "type": "IconProps",
+              "mandatory": false,
+              "description": "An icon to be displayed next to the navigation item"
+            },
+            { "name": "badge",
+              "type": "string",
+              "mandatory": false,
+              "description": "A string property allowing content to be displayed in a badge next to the navigation item"
+            },
+            { "name": "label",
+              "type": "string",
+              "mandatory": false,
+              "description": "A string property allowing content to be displayed as link text in the navigation item"
+            },
+            { "name": "disabled",
+              "type": "boolean",
+              "mandatory": false,
+              "description": "A boolean property indicating whether the navigation item is disabled"
+            },
+            { "name": "new",
+              "type": "boolean",
+              "mandatory": false,
+              "description": "Indicate whether the navigation item is new by adding an indicator dot to the parent and badge to the item (overwritten by the badge prop)"
+            },
+            { "name": "accessibilityLabel",
+              "type": "string",
+              "mandatory": false,
+              "description": "A visually hidden label for screen readers to understand the content of a navigation item"
+            },
+            { "name": "selected",
+              "type": "boolean",
+              "mandatory": false,
+              "description": "A boolean property indicating whether the navigation item is the currently-selected item"
+            },
+            { "name": "subNavigationItems",
+              "type": "Item[]",
+              "mandatory": false,
+              "description": "A collection of navigation items rendered as nested secondary navigation items"
+            },
+            { "name": "secondaryAction",
+              "type": "SecondaryAction",
+              "mandatory": false,
+              "description": "Renders an icon-only action as a supplementary action next to a navigation item"
+            },
+            { "name": "onClick",
+              "type": "() => void",
+              "mandatory": false,
+              "description": "A callback function to handle clicking on a navigation item"
+            }
+          ]
+        },
+        { "name": "icon",
+          "type": "IconProps",
+          "mandatory": false,
+          "description": "An icon to be displayed next to the section title"
+        },
+        { "name": "title",
+          "type": "string",
+          "mandatory": false,
+          "description": "A string property providing a title for the navigation section"
+        },
+        { "name": "fill",
+          "type": "boolean",
+          "mandatory": false,
+          "description": "A boolean property indicating whether the section should take up all vertical space available"
+        },
+        { "name": "rollup",
+          "type": "Rollup[]",
+          "mandatory": false,
+          "description": "An object determining the collapsing behavior of the navigation section",
+          "types":[
+            { "name": "after",
+              "type": "number",
+              "mandatory": false,
+              "description": "A number of items after which the navigation section should be collapsed"
+            },
+            { "name": "view",
+              "type": "string",
+              "mandatory": false,
+              "description": "A string property providing content for the section view action"
+            },
+            { "name": "hide",
+              "type": "string",
+              "mandatory": false,
+              "description": "A string property providing content for the section hide action"
+            },
+            { "name": "activePath",
+              "type": "string",
+              "mandatory": false,
+              "description": "A string property representing the current URL of your application"
+            }
+          ]
+        },
+        { "name": "action",
+          "type": "Action[]",
+          "mandatory": false,
+          "description": "Renders an icon-only action as a supplementary action next to the section title",
+          "types": [
+            { "name": "icon",
+              "type": "IconProps",
+              "mandatory": false,
+              "description": "An icon to be displayed as the content of the action"
+            },
+            { "name": "accessibilityLabel",
+              "type": "string",
+              "mandatory": false,
+              "description": "A visually hidden label for screen readers to understand the content of the action"
+            },
+            { "name": "onClick",
+              "type": "() => void",
+              "mandatory": false,
+              "description": "A callback function to handle clicking on the action"
+            }
+          ]
+        },
+        { "name": "separator",
+          "type": "boolean",
+          "mandatory": false,
+          "description": "A boolean property indicating whether the section should have a visual separator"
+        }
+      ]
+    }
+  ]
+}
