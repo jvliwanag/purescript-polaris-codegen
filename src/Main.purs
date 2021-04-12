@@ -17,7 +17,6 @@ import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.String (Pattern(..), Replacement(..), stripSuffix)
 import Data.String as String
 import Data.Traversable (traverse, traverse_)
-import Debug (traceM)
 import Effect (Effect)
 import Effect.Aff (Aff, makeAff, nonCanceler, runAff_)
 import Effect.Class (liftEffect)
