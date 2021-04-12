@@ -35,7 +35,7 @@
               "description": "A string property providing an explicit collection of paths the navigation item should not respond to"
             },
             { "name": "icon",
-              "type": "IconProps",
+              "type": "string",
               "mandatory": false,
               "description": "An icon to be displayed next to the navigation item"
             },
@@ -70,14 +70,66 @@
               "description": "A boolean property indicating whether the navigation item is the currently-selected item"
             },
             { "name": "subNavigationItems",
-              "type": "Item[]",
+              "type": "SubNavigationItem[]",
               "mandatory": false,
-              "description": "A collection of navigation items rendered as nested secondary navigation items"
+              "description": "A collection of navigation items rendered as nested secondary navigation items",
+              "types": [
+                { "name": "url",
+                  "type": "string",
+                  "mandatory": true
+                },
+                { "name": "matches",
+                  "type": "boolean",
+                  "mandatory": false
+                },
+                { "name": "exactMatch",
+                  "type": "boolean",
+                  "mandatory": false
+                },
+                { "name": "matchPaths",
+                  "type": "string[]",
+                  "mandatory": false
+                },
+                { "name": "excludePaths?",
+                  "type": "string[]",
+                  "mandatory": false
+                },
+                { "name": "label",
+                  "type": "string",
+                  "mandatory": false
+                },
+                { "name": "disabled?",
+                  "type": "boolean",
+                  "mandatory": false
+                },
+                { "name": "new?",
+                  "type": "boolean",
+                  "mandatory": false
+                },
+                { "name": "onClick?(event",
+                  "type": "() => void",
+                  "mandatory": false
+                }
+              ]
             },
             { "name": "secondaryAction",
               "type": "SecondaryAction",
               "mandatory": false,
-              "description": "Renders an icon-only action as a supplementary action next to a navigation item"
+              "description": "Renders an icon-only action as a supplementary action next to a navigation item",
+              "types": [
+                { "name": "url",
+                  "type": "string",
+                  "mandatory": false
+                },
+                { "name": "accessibilityLabel",
+                  "type": "string",
+                  "mandatory": false
+                },
+                { "name": "icon",
+                  "type": "string",
+                  "mandatory": false
+                }
+              ]
             },
             { "name": "onClick",
               "type": "() => void",
@@ -87,7 +139,7 @@
           ]
         },
         { "name": "icon",
-          "type": "IconProps",
+          "type": "string",
           "mandatory": false,
           "description": "An icon to be displayed next to the section title"
         },
@@ -134,7 +186,7 @@
           "description": "Renders an icon-only action as a supplementary action next to the section title",
           "types": [
             { "name": "icon",
-              "type": "IconProps",
+              "type": "string",
               "mandatory": false,
               "description": "An icon to be displayed as the content of the action"
             },
